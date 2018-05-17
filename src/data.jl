@@ -129,8 +129,24 @@ function lsngd(A, b, mu, x0, nIters)
 end
 
 # TODO: HEAVY-BALL
-function lshgd()
-    # TODO
+function lshgd(A, b, mu, x0, nIters)
+    t_k = 0
+    t_k1 = 0
+
+    z_k1 = x0
+
+    x_k = x0
+    x_k1 = x0
+
+    for i = 1:nIters
+        t_k1 = (1 + (1 + 4 * t_k^2)^0.5) / 2
+        z_k1 = x_k1 + (t_k - 1) / t_k1 * (x_k1 - x_k)
+        x_k1 = z_k1 - mu * A' * (A * x_k1 - b)
+        x_k = x_k1
+        t_k = t_k1
+    end
+
+    return x_k1
 end
 
 ###############################
@@ -155,7 +171,8 @@ function graph_lsgd(A, b, xtrue)
     plot(k, y)
     xlabel("Number of Iterations")
     ylabel("Least Sqaures Error")
-    title("LSGD Plot with k from 25 to 499")
+    # label("LSGD: Standard Gradient Descent")
+    title("LSGD Plot with iterations from 25 to 499")
 end
 
 function graph_lsngd(A, b, xtrue)
@@ -176,11 +193,30 @@ function graph_lsngd(A, b, xtrue)
     plot(k, y)
     xlabel("Number of Iterations")
     ylabel("Least Sqaures Error")
-    title("LSNGD Plot with k from 25 to 499")
+    # label("LSNGD: Nesterov-accelerated Gradient Descent")
+    title("LSNGD Plot with iterations from 25 to 499")
 end
 
-function graph_lshgd()
-    # TODO
+function graph_lshgd(A, b, xtrue)
+    mu = 0.5 / norm(A)^2
+    x0 = rand(size(A)[2])
+
+    L = 475
+    k = zeros(L, 1)
+    y = zeros(L, 1)
+
+    for i = 1 : L
+        nIters = 24 + i
+        k[i] = nIters
+        x_k = lshgd(A, b, mu, x0, nIters)
+        y[i] = norm(xtrue - x_k)
+    end
+
+    plot(k, y)
+    xlabel("Number of Iterations")
+    ylabel("Least Sqaures Error")
+    # label("LSHGD: Heavy-ball Gradient Descent")
+    title("LSHGD Plot with iterations from 25 to 499")
 end
 
 #############################
@@ -198,11 +234,18 @@ A2, b2, xtrue2 = generate_poly_data(100, 49, 0.1)
 print("Generated data. Now doing lsgd...")
 figure(1)
 graph_lsgd(A1, b1, xtrue1)
-graph_lsgd(A2, b2, xtrue2)
+# graph_lsgd(A2, b2, xtrue2)
 
 print("Did lsgd. Now doing lsngd.")
 figure(2)
 graph_lsngd(A1, b1, xtrue1)
-graph_lsngd(A2, b2, xtrue2)
+# graph_lsngd(A2, b2, xtrue2)
+
+print("Did lsngd. Now doing lshgd.")
+figure(3)
+graph_lshgd(A1, b1, xtrue1)
+# graph_lshgd(A2, b2, xtrue2)
+# title("Gradient Descent for Gaussian Data with STD = 1")
+
 
 print("Done.")
